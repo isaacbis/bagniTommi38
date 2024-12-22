@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prenotazioni Campi</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      background-color: #333;
+      color: white;
+      padding: 10px 0;
+    }
+    form {
+      margin: 20px auto;
+      padding: 20px;
+      background: #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      width: 300px;
+      text-align: left;
+    }
+    input, button {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    #reservations {
+      margin-top: 20px;
+    }
+    .reservation {
+      background: #fff;
+      margin: 10px auto;
+      padding: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      width: 300px;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <h1>Prenotazioni Campi</h1>
+
+  <!-- Form per aggiungere una prenotazione -->
+  <form id="reservationForm">
+    <input type="text" id="field" placeholder="Campo (es. Volley1)" required>
+    <input type="date" id="date" required>
+    <input type="time" id="timeSlot" required>
+    <input type="text" id="username" placeholder="Nome utente" required>
+    <button type="submit">Prenota</button>
+  </form>
+
+  <!-- Elenco delle prenotazioni -->
+  <div id="reservations"></div>
+
+  <script>
+    const apiUrl = 'https://tuo-server.onrender.com/api/reservations';
+
+    // Carica le prenotazioni dal server
+    async function loadReservations() {
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        const container = document.getElementById('reservations');
+        container.innerHTML = data.map(res => `
+          <div class="reservation">
+            <p><strong>Campo:</strong> ${res.field}</p>
+            <p><strong>Data:</strong> ${res.date}</p>
+            <p><strong>Orario:</strong> ${res.timeSlot}</p>
+            <p><strong>Utente:</strong> ${res.username}</p>
+            <button onclick="deleteReservation('${res._id}')">Elimina</button>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Errore nel caricamento delle prenotazioni:', error);
+      }
+    }
+
+    // Aggiungi una prenotazione
+    document.getElementById('reservationForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const field = document.getElementById('field').value;
+      const date = document.getElementById('date').value;
+      const timeSlot = document.getElementById('timeSlot').value;
+      const username = document.getElementById('username').value;
+
+      try {
+        await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ field, date, timeSlot, username })
+        });
+        loadReservations();
+      } catch (error) {
+        console.error('Errore nella creazione della prenotazione:', error);
+      }
+    });
+
+    // Elimina una prenotazione
+    async function deleteReservation(id) {
+      try {
+        await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+        loadReservations();
+      } catch (error) {
+        console.error('Errore nella cancellazione della prenotazione:', error);
+      }
+    }
+
+    // Carica le prenotazioni all'avvio
+    loadReservations();
+  </script>
+</body>
+</html>
