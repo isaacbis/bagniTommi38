@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prenotazione Campi</title>
+  <style>
+    /* Reset e base */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(to bottom, #fefcea, #f1da9d);
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 20px;
+    }
+
+    header {
+      background: #ff8c00;
+      color: #fff;
+      padding: 15px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      font-size: 1.5rem;
+      position: fixed;
+      top: 0;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      padding: 20px;
+      margin-top: 100px;
+    }
+
+    h1 {
+      color: #ff8c00;
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 2rem;
+    }
+
+    form {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+
+    form input, form button {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+
+    form button {
+      background: #ff8c00;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+
+    form button:hover {
+      background: #e07300;
+    }
+
+    .fields-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .field-box {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .field-box h3 {
+      margin-bottom: 15px;
+      color: #ff8c00;
+    }
+
+    .slot-info div {
+      margin: 5px 0;
+      padding: 8px 10px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    .available {
+      background-color: #d4edda;
+      color: #155724;
+      cursor: pointer;
+    }
+
+    .available:hover {
+      background-color: #c3e6cb;
+    }
+
+    .unavailable {
+      background-color: #f8d7da;
+      color: #721c24;
+      cursor: not-allowed;
+    }
+
+    .my-booking {
+      background-color: #fff3cd;
+      color: #856404;
+    }
+
+    footer {
+      margin-top: auto;
+      padding: 10px;
+      text-align: center;
+      background: #ff8c00;
+      color: #fff;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <header>Prenotazione Campi</header>
+
+  <div class="container">
+    <!-- Sezione Login -->
+    <div id="login-area">
+      <h1>Benvenuto su Tommi38</h1>
+      <form>
+        <input type="text" id="username" placeholder="Username" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <button type="button" onclick="login('utente')">Accedi come Utente</button>
+        <button type="button" onclick="login('admin')">Accedi come Amministratore</button>
+      </form>
+    </div>
+
+    <!-- Sezione Applicazione -->
+    <div id="app-area" style="display: none;">
+      <div class="fields-container">
+        <div class="field-box">
+          <h3>Volley1</h3>
+          <div class="slot-info" id="slots-Volley1"></div>
+        </div>
+        <div class="field-box">
+          <h3>Volley2</h3>
+          <div class="slot-info" id="slots-Volley2"></div>
+        </div>
+        <div class="field-box">
+          <h3>Basket/Calcio</h3>
+          <div class="slot-info" id="slots-Basket/Calcio"></div>
+        </div>
+        <div class="field-box">
+          <h3>Ping-pong</h3>
+          <div class="slot-info" id="slots-Ping-pong"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>© 2024 Tommi38. Tutti i diritti riservati.</footer>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js"></script>
+
+  <script>
+    // Configurazione Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAwmtTDpFXwEFLCJCFBMWpNW8WFUJ0Grik",
+      authDomain: "prenotazione-campi-b7176.firebaseapp.com",
+      projectId: "prenotazione-campi-b7176",
+      storageBucket: "prenotazione-campi-b7176.firebasestorage.app",
+      messagingSenderId: "568549484108",
+      appId: "1:568549484108:web:4bd58040221c79409076e9",
+      measurementId: "G-CJYCEMS2WK"
+    };
+
+    // Inizializza Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    let currentUser = null;
+
+    // Login utente
+    function login(type) {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      if (!username || !password) {
+        alert('Inserisci username e password.');
+        return;
+      }
+
+      if (type === 'utente') {
+        currentUser = username;
+        document.getElementById('login-area').style.display = 'none';
+        document.getElementById('app-area').style.display = 'block';
+        loadReservations();
+      } else if (type === 'admin' && username === 'admin' && password === 'passwordAdmin') {
+        currentUser = username;
+        document.getElementById('login-area').style.display = 'none';
+        document.getElementById('app-area').style.display = 'block';
+        loadReservations();
+      } else {
+        alert('Credenziali non valide.');
+      }
+    }
+
+    // Funzione per caricare le prenotazioni
+    async function loadReservations() {
+      try {
+        const snapshot = await db.collection("reservations").get();
+        snapshot.forEach(doc => {
+          console.log(doc.id, doc.data());
+        });
+      } catch (error) {
+        console.error("Errore nel caricamento delle prenotazioni:", error);
+      }
+    }
+  </script>
+</body>
+</html>
